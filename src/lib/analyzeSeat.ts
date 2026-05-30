@@ -55,9 +55,14 @@ function getOceanParityForLine(
   return southboundSide === 'even' ? 'odd' : 'even'
 }
 
+function normalize(str: string): string {
+  return str.replace(/臺/g, '台')
+}
+
 // 取得某站的所有對應 Station 物件（同名站可能在多條線）
 function findStations(name: string): Station[] {
-  return STATIONS.filter((s) => s.name === name)
+  const n = normalize(name)
+  return STATIONS.filter((s) => normalize(s.name) === n)
 }
 
 // 判斷兩站是否在同一條線，並回傳共同線別

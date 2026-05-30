@@ -217,12 +217,22 @@ export function getStationByName(name: string): Station | undefined {
   return STATIONS.find((s) => s.name === name)
 }
 
+function normalize(str: string): string {
+  return str.replace(/臺/g, '台')
+}
+
 export function searchStations(query: string): Station[] {
   if (!query) return []
-  return STATIONS.filter((s) => s.name.includes(query)).slice(0, 10)
+  const q = normalize(query)
+  return STATIONS.filter((s) => normalize(s.name).includes(q)).slice(0, 10)
 }
 
 // 同名站（台北在東西線都存在），回傳全部
 export function getAllByName(name: string): Station[] {
   return STATIONS.filter((s) => s.name === name)
+}
+
+export function getStationByNameNormalized(name: string): Station | undefined {
+  const n = normalize(name)
+  return STATIONS.find((s) => normalize(s.name) === n)
 }
