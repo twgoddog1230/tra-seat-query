@@ -1,27 +1,15 @@
 'use client'
 
-import { AnalysisResult, Direction } from '@/lib/analyzeSeat'
+import { AnalysisResult } from '@/lib/analyzeSeat'
 import { LineType } from '@/data/stations'
 import { TrainType, TRAIN_TYPES } from '@/data/trainRules'
+// LineType 仍用於 CrossLineNotice
 
 interface Props {
   result: AnalysisResult
   trainType: TrainType
   fromStation: string
   toStation: string
-}
-
-function directionLabel(d: Direction) {
-  return d === 'southbound' ? '南下（往台東／高雄方向）' : '北上（往台北方向）'
-}
-
-function lineLabel(l: LineType) {
-  switch (l) {
-    case 'east': return '東部幹線'
-    case 'west-mountain': return '西部山線'
-    case 'west-coast': return '西部海線'
-    case 'south-link': return '南迴線'
-  }
 }
 
 export default function ResultCard({ result, trainType, fromStation, toStation }: Props) {
@@ -50,10 +38,9 @@ export default function ResultCard({ result, trainType, fromStation, toStation }
 
       {/* 主要資訊 */}
       <div className="px-5 py-5 flex flex-col gap-4">
-        {/* 路線 + 方向 */}
+        {/* 路線標籤 */}
         <div className="flex flex-wrap gap-2">
-          <Chip color="blue">{lineLabel(result.primaryLine)}</Chip>
-          <Chip color="slate">{directionLabel(result.direction)}</Chip>
+          <Chip color="blue">{result.routeLabel}</Chip>
         </div>
 
         {/* 車廂座位 */}

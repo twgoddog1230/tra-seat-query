@@ -18,15 +18,46 @@ export interface LineSegment {
 
 export interface AnalysisResult {
   isWindow: boolean
-  facesOcean: boolean        // 只有靠窗+靠海才為 true
-  oceanName: string          // '太平洋' | '台灣海峽' | ''
+  facesOcean: boolean
+  oceanName: string
   direction: Direction
   primaryLine: LineType
+  routeLabel: string          // 如「南迴線（往台東方向）」「北迴線（往花蓮方向）」
   isCrossLine: boolean
-  segments: LineSegment[]    // 跨線時有多段
+  segments: LineSegment[]
   carNumber: number
   seatNumber: number
   error?: string
+}
+
+const HUALIEN_SEQ = 41 // 花蓮在東部幹線的序號
+
+function computeRouteLabel(
+  line: LineType,
+  direction: Direction,
+  fromSeq: number,
+  toSeq: number
+): string {
+  if (line === 'south-link') {
+    return direction === 'northbound'
+      ? '南迴線（往台東方向）'
+      : '南迴線（往枋寮方向）'
+  }
+  if (line === 'east') {
+    const minSeq = Math.min(fromSeq, toSeq)
+    const maxSeq = Math.max(fromSeq, toSeq)
+    if (maxSeq <= HUALIEN_SEQ) {
+      return direction === 'southbound' ? '北迴線（往花蓮方向）' : '北迴線（往台北方向）'
+    }
+    if (minSeq >= HUALIEN_SEQ) {
+      return direction === 'southbound' ? '花東線（往台東方向）' : '花東線（往花蓮方向）'
+    }
+    return direction === 'southbound' ? '南下（往台東方向）' : '北上（往台北方向）'
+  }
+  if (line === 'west-coast') {
+    return direction === 'southbound' ? '海線（往彰化方向）' : '海線（往竹南方向）'
+  }
+  return direction === 'southbound' ? '南下（往高雄方向）' : '北上（往台北方向）'
 }
 
 // 取得有靠海名稱的路線
@@ -161,12 +192,14 @@ export function analyzeSeat(params: {
     const oceanParity = getOceanParityForLine(sharedLine, direction, trainType, carNumber)
     const facesOcean = window && !!oceanParity && parity === oceanParity
 
+    const routeLabel = computeRouteLabel(sharedLine, direction, fromSeq, toSeq)
     return {
       isWindow: window,
       facesOcean,
       oceanName: facesOcean ? oceanName : '',
       direction,
       primaryLine: sharedLine,
+      routeLabel,
       isCrossLine: false,
       segments: [
         {
@@ -207,12 +240,17 @@ export function analyzeSeat(params: {
   const facesOcean = window && !!oceanParity && parity === oceanParity
   const oceanName = getOceanName(primaryLine)
 
+  const primaryFromSeq = findStations(primarySeg.from).find((s) => s.line === primaryLine)?.seq ?? 0
+  const primaryToSeq = findStations(primarySeg.to).find((s) => s.line === primaryLine)?.seq ?? 1
+  const routeLabel = computeRouteLabel(primaryLine, direction, primaryFromSeq, primaryToSeq)
+
   return {
     isWindow: window,
     facesOcean,
     oceanName: facesOcean ? oceanName : '',
     direction,
     primaryLine,
+    routeLabel,
     isCrossLine: true,
     segments: crossSegments,
     carNumber,
@@ -227,6 +265,7 @@ function makeError(msg: string): AnalysisResult {
     oceanName: '',
     direction: 'southbound',
     primaryLine: 'east',
+    routeLabel: '',
     isCrossLine: false,
     segments: [],
     carNumber: 0,
