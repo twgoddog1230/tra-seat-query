@@ -81,7 +81,8 @@ export const STATIONS: Station[] = [
   { name: '山里', line: 'east', seq: 65 },
   { name: '台東', line: 'east', seq: 66 },
 
-  // ── 南迴線（接台東往枋寮，視為east延伸）─────────────
+  // ── 南迴線（台東為東部/南迴共用起訖站）─────────────
+  { name: '台東', line: 'south-link', seq: 66 },
   { name: '康樂', line: 'south-link', seq: 67 },
   { name: '知本', line: 'south-link', seq: 68 },
   { name: '太麻里', line: 'south-link', seq: 69 },

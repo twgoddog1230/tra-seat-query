@@ -38,21 +38,28 @@ function getOceanName(line: LineType): string {
 }
 
 // 給定路線+方向，判斷靠海的是奇還是偶
-// 東部幹線/南迴線/西部海線：南下時右側（偶號）靠海；北上時左側（單號）靠海
 function getOceanParityForLine(
   line: LineType,
   direction: Direction,
   trainType: TrainType,
   carNumber: number
 ): 'even' | 'odd' | null {
-  if (line === 'west-mountain') return null // 山線無靠海
+  if (line === 'west-mountain') return null
 
-  const southboundSide = getSouthboundOceanSide(trainType, carNumber)
-  if (!southboundSide) return null
+  const eastSouthboundSide = getSouthboundOceanSide(trainType, carNumber)
+  if (!eastSouthboundSide) return null
 
-  if (direction === 'southbound') return southboundSide
-  // 北上時翻轉
-  return southboundSide === 'even' ? 'odd' : 'even'
+  if (line === 'south-link') {
+    // 南迴線方向與東部幹線相反：
+    // 北上（枋寮→台東）= 東部南下規則
+    // 南下（台東→枋寮）= 東部北上規則（翻轉）
+    if (direction === 'northbound') return eastSouthboundSide
+    return eastSouthboundSide === 'even' ? 'odd' : 'even'
+  }
+
+  // 東部幹線 / 西部海線
+  if (direction === 'southbound') return eastSouthboundSide
+  return eastSouthboundSide === 'even' ? 'odd' : 'even'
 }
 
 function normalize(str: string): string {
@@ -102,13 +109,18 @@ function buildCrossLineSegments(
       { line: 'west-mountain', from: '台北', to: toName, hasOcean: false, oceanName: '' },
     ]
   }
-  // 東部幹線 → 南迴線（同為太平洋側，視為連續）
-  if (
-    (fromLines.has('east') && toLines.has('south-link')) ||
-    (fromLines.has('south-link') && toLines.has('east'))
-  ) {
+  // 東部幹線 → 南迴線（兩段：東部到台東 + 南迴台東到終點）
+  if (fromLines.has('east') && !fromLines.has('south-link') && toLines.has('south-link')) {
     return [
-      { line: 'east', from: fromName, to: toName, hasOcean: true, oceanName: '太平洋' },
+      { line: 'east', from: fromName, to: '台東', hasOcean: true, oceanName: '太平洋' },
+      { line: 'south-link', from: '台東', to: toName, hasOcean: true, oceanName: '太平洋' },
+    ]
+  }
+  // 南迴線 → 東部幹線（兩段：南迴到台東 + 東部台東到終點）
+  if (fromLines.has('south-link') && !toLines.has('south-link') && toLines.has('east')) {
+    return [
+      { line: 'south-link', from: fromName, to: '台東', hasOcean: true, oceanName: '太平洋' },
+      { line: 'east', from: '台東', to: toName, hasOcean: true, oceanName: '太平洋' },
     ]
   }
   return null
