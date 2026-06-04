@@ -68,29 +68,15 @@ function getOceanName(line: LineType): string {
   return ''
 }
 
-// 給定路線+方向，判斷靠海的是奇還是偶
+// 靠海座位由座位在車廂中的物理位置決定，與行駛方向無關
 function getOceanParityForLine(
   line: LineType,
-  direction: Direction,
+  _direction: Direction,
   trainType: TrainType,
   carNumber: number
 ): 'even' | 'odd' | null {
   if (line === 'west-mountain') return null
-
-  const eastSouthboundSide = getSouthboundOceanSide(trainType, carNumber)
-  if (!eastSouthboundSide) return null
-
-  if (line === 'south-link') {
-    // 南迴線方向與東部幹線相反：
-    // 北上（枋寮→台東）= 東部南下規則
-    // 南下（台東→枋寮）= 東部北上規則（翻轉）
-    if (direction === 'northbound') return eastSouthboundSide
-    return eastSouthboundSide === 'even' ? 'odd' : 'even'
-  }
-
-  // 東部幹線 / 西部海線
-  if (direction === 'southbound') return eastSouthboundSide
-  return eastSouthboundSide === 'even' ? 'odd' : 'even'
+  return getSouthboundOceanSide(trainType, carNumber)
 }
 
 function normalize(str: string): string {
