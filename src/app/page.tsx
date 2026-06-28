@@ -5,8 +5,10 @@ import StationInput from '@/components/StationInput'
 import TrainTypeSelector from '@/components/TrainTypeSelector'
 import CarSeatInput from '@/components/CarSeatInput'
 import ResultCard from '@/components/ResultCard'
+import QueryHistory from '@/components/QueryHistory'
 import { analyzeSeat, AnalysisResult } from '@/lib/analyzeSeat'
 import { TrainType, TRAIN_TYPES } from '@/data/trainRules'
+import { useQueryHistory } from '@/hooks/useQueryHistory'
 
 export default function Home() {
   const [fromStation, setFromStation] = useState('')
@@ -15,6 +17,8 @@ export default function Home() {
   const [carNumber, setCarNumber] = useState('')
   const [seatNumber, setSeatNumber] = useState('')
   const [result, setResult] = useState<AnalysisResult | null>(null)
+
+  const { history, favorites, loaded, addQueryRecord, addFavoriteFromRecord, addFavorite, removeFavorite } = useQueryHistory()
 
   const maxCar = trainType ? (TRAIN_TYPES.find((t) => t.id === trainType)?.totalCars ?? 0) : 0
 
@@ -30,9 +34,38 @@ export default function Home() {
       seatNumber: parseInt(seatNumber),
     })
     setResult(r)
+
+    // 記錄查詢歷史
+    addQueryRecord(
+      fromStation,
+      toStation,
+      trainType as TrainType,
+      parseInt(carNumber),
+      parseInt(seatNumber)
+    )
+
     setTimeout(() => {
       document.getElementById('result')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
     }, 50)
+  }
+
+  function handleSelectFavorite(from: string, to: string) {
+    setFromStation(from)
+    setToStation(to)
+    setResult(null)
+  }
+
+  function handleSelectHistory(from: string, to: string, train: string, car: number, seat: number) {
+    setFromStation(from)
+    setToStation(to)
+    setTrainType(train as TrainType)
+    setCarNumber(String(car))
+    setSeatNumber(String(seat))
+    setResult(null)
+  }
+
+  function handleAddFavoriteFromHistory(fromStation: string, toStation: string) {
+    addFavorite(fromStation, toStation)
   }
 
   function handleSwap() {
@@ -57,6 +90,20 @@ export default function Home() {
 
       {/* Form */}
       <main className="flex-1 px-4 py-6 max-w-lg mx-auto w-full flex flex-col gap-6">
+        {/* 歷史記錄與最愛 */}
+        {loaded && (history.length > 0 || favorites.length > 0) && (
+          <QueryHistory
+            favorites={favorites}
+            history={history}
+            onSelectFavorite={handleSelectFavorite}
+            onSelectHistory={handleSelectHistory}
+            onAddFavoriteFromHistory={(record) =>
+              handleAddFavoriteFromHistory(record.fromStation, record.toStation)
+            }
+            onRemoveFavorite={removeFavorite}
+          />
+        )}
+
         <form onSubmit={handleSubmit} className="flex flex-col gap-5">
           {/* 起訖站 */}
           <div className="relative flex flex-col gap-3">
